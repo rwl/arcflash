@@ -1,0 +1,11 @@
+[package]
+name = "arcflash"
+version = "0.1.0"
+edition = "2021"
+description = "Arc flash calculations according to IEEE 1584"
+license = "MIT"
+
+[dependencies]
+lazy_static = "1.4"
+uom = "0.36"
+anyhow = "1"
