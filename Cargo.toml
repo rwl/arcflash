@@ -9,3 +9,6 @@ license = "MIT"
 lazy_static = "1.4"
 uom = "0.36"
 anyhow = "1"
+
+[dev-dependencies]
+float-cmp = "0.9"

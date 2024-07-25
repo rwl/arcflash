@@ -7,7 +7,7 @@ use uom::si::time::millisecond;
 
 use crate::common::NominalVoltage;
 use crate::cubicle::Cubicle;
-use crate::equations::{intermediate_afb_from_e, intermediate_e, interpolate_e, interpolate_l};
+use crate::equations::{intermediate_afb_from_e, intermediate_e, interpolate};
 use crate::i_arc::IArc;
 
 pub enum EAfb {
@@ -16,6 +16,24 @@ pub enum EAfb {
 }
 
 impl EAfb {
+    pub fn hv(&self) -> &EAfbHV {
+        match self {
+            EAfb::HighVoltage(e_afb) => e_afb,
+            EAfb::LowVoltage(_) => {
+                panic!("called `EAfb::hv()` on a `LowVoltage` value")
+            }
+        }
+    }
+
+    pub fn lv(&self) -> &EAfbLV {
+        match self {
+            EAfb::LowVoltage(e_afb) => e_afb,
+            EAfb::HighVoltage(_) => {
+                panic!("called `EAfb::lv()` on a `HighVoltage` value")
+            }
+        }
+    }
+
     pub fn t_arc(&self) -> Time {
         match self {
             EAfb::HighVoltage(e_afb) => e_afb.t_arc,
@@ -63,7 +81,7 @@ pub fn e_afb(c: &Cubicle, i_arc: IArc, t_arc: Time) -> EAfb {
             // Max
             let e_600 = intermediate_e(
                 c,
-                NominalVoltage::V0_6,
+                NominalVoltage::V600,
                 i_arc.i_arc_600,
                 i_arc.i_bf,
                 t_arc,
@@ -71,7 +89,7 @@ pub fn e_afb(c: &Cubicle, i_arc: IArc, t_arc: Time) -> EAfb {
             );
             let e_2700 = intermediate_e(
                 c,
-                NominalVoltage::V2_7,
+                NominalVoltage::V2700,
                 i_arc.i_arc_2700,
                 i_arc.i_bf,
                 t_arc,
@@ -79,33 +97,33 @@ pub fn e_afb(c: &Cubicle, i_arc: IArc, t_arc: Time) -> EAfb {
             );
             let e_14300 = intermediate_e(
                 c,
-                NominalVoltage::V14_3,
+                NominalVoltage::V14300,
                 i_arc.i_arc_14300,
                 i_arc.i_bf,
                 t_arc,
                 None,
             );
-            let afb_600 = intermediate_afb_from_e(c, NominalVoltage::V0_6, e_600);
-            let afb_2700 = intermediate_afb_from_e(c, NominalVoltage::V2_7, e_2700);
-            let afb_14300 = intermediate_afb_from_e(c, NominalVoltage::V14_3, e_14300);
+            let afb_600 = intermediate_afb_from_e(c, NominalVoltage::V600, e_600);
+            let afb_2700 = intermediate_afb_from_e(c, NominalVoltage::V2700, e_2700);
+            let afb_14300 = intermediate_afb_from_e(c, NominalVoltage::V14300, e_14300);
 
             EAfb::HighVoltage(EAfbHV {
                 t_arc,
                 afb_14300,
                 afb_2700,
                 afb_600,
-                afb: interpolate_l(c, afb_600, afb_2700, afb_14300),
+                afb: interpolate!(c, afb_600, afb_2700, afb_14300),
                 e_14300,
                 e_2700,
                 e_600,
-                e: interpolate_e(c, e_600, e_2700, e_14300),
+                e: interpolate!(c, e_600, e_2700, e_14300),
             })
         }
         IArc::LowVoltage(i_arc) => {
             // Note I_arc_600_max, **not** I_arc_600_min, even in a "min" calculation.
             let e = intermediate_e(
                 c,
-                NominalVoltage::V0_6,
+                NominalVoltage::V600,
                 i_arc.i_arc,
                 i_arc.i_bf,
                 t_arc,
@@ -114,7 +132,7 @@ pub fn e_afb(c: &Cubicle, i_arc: IArc, t_arc: Time) -> EAfb {
             EAfb::LowVoltage(EAfbLV {
                 t_arc,
                 e,
-                afb: intermediate_afb_from_e(c, NominalVoltage::V0_6, e),
+                afb: intermediate_afb_from_e(c, NominalVoltage::V600, e),
             })
         }
     }

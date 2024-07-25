@@ -84,9 +84,9 @@ pub fn intermediate_e(
     // assert (V_oc <= 0.6 * kV) or (V_oc in (0.6 * kV, 2.7 * kV, 14.3 * kV,))
 
     let k: &Table3_4_5Row = match v_oc {
-        NominalVoltage::V0_6 => TABLE_3.get(&c.ec).unwrap(),
-        NominalVoltage::V2_7 => TABLE_4.get(&c.ec).unwrap(),
-        NominalVoltage::V14_3 => TABLE_5.get(&c.ec).unwrap(),
+        NominalVoltage::V600 => TABLE_3.get(&c.ec).unwrap(),
+        NominalVoltage::V2700 => TABLE_4.get(&c.ec).unwrap(),
+        NominalVoltage::V14300 => TABLE_5.get(&c.ec).unwrap(),
     };
     // let k = if V_oc <= 0.6 * kV {
     //     TABLE_3[c.EC]
@@ -211,9 +211,9 @@ pub fn intermediate_afb_from_e(c: &Cubicle, v_oc: NominalVoltage, e: RadiantExpo
     // else:
     //     k = None
     let k: &Table3_4_5Row = match v_oc {
-        NominalVoltage::V0_6 => TABLE_3.get(&c.ec).unwrap(),
-        NominalVoltage::V2_7 => TABLE_4.get(&c.ec).unwrap(),
-        NominalVoltage::V14_3 => TABLE_5.get(&c.ec).unwrap(),
+        NominalVoltage::V600 => TABLE_3.get(&c.ec).unwrap(),
+        NominalVoltage::V2700 => TABLE_4.get(&c.ec).unwrap(),
+        NominalVoltage::V14300 => TABLE_5.get(&c.ec).unwrap(),
     };
 
     // After all the explanation, calculation of the (intermediate) AFB is simply 2 lines.
@@ -223,91 +223,27 @@ pub fn intermediate_afb_from_e(c: &Cubicle, v_oc: NominalVoltage, e: RadiantExpo
     Length::new::<mm>(afb)
 }
 
-pub fn interpolate_e(
-    c: &Cubicle,
-    x_600: RadiantExposure,
-    x_2700: RadiantExposure,
-    x_14300: RadiantExposure,
-) -> RadiantExposure {
-    let v_oc = c.v_oc.get::<kilovolt>();
+macro_rules! interpolate {
+    ($c:expr, $x_600:expr, $x_2700:expr, $x_14300:expr) => {{
+        let v_oc = $c.v_oc.get::<uom::si::electric_potential::kilovolt>();
 
-    // Eq 16, Eq 19, Eq 22
-    let x1 = (((x_2700 - x_600) / 2.1) * (v_oc - 2.7)) + x_2700;
-    // Eq 17, Eq 20, Eq 23
-    let x2 = (((x_14300 - x_2700) / 11.6) * (v_oc - 14.3)) + x_14300;
-    // Eq 18, Eq 21, Eq 24
-    let x3 = ((x1 * (2.7 - v_oc)) / 2.1) + ((x2 * (v_oc - 0.6)) / 2.1);
+        // Eq 16, Eq 19, Eq 22
+        let x1 = ((($x_2700 - $x_600) / 2.1) * (v_oc - 2.7)) + $x_2700;
+        // Eq 17, Eq 20, Eq 23
+        let x2 = ((($x_14300 - $x_2700) / 11.6) * (v_oc - 14.3)) + $x_14300;
+        // Eq 18, Eq 21, Eq 24
+        let x3 = ((x1 * (2.7 - v_oc)) / 2.1) + ((x2 * (v_oc - 0.6)) / 2.1);
 
-    if 0.600 < v_oc && v_oc <= 2.7 {
-        x3
-    } else if v_oc > 2.7 {
-        x2
-    } else {
-        unreachable!()
-    }
+        if 0.600 < v_oc && v_oc <= 2.7 {
+            x3
+        } else if v_oc > 2.7 {
+            x2
+        } else {
+            unreachable!()
+        }
+    }};
 }
-
-pub fn interpolate_l(c: &Cubicle, x_600: Length, x_2700: Length, x_14300: Length) -> Length {
-    let v_oc = c.v_oc.get::<kilovolt>();
-
-    // Eq 16, Eq 19, Eq 22
-    let x1 = (((x_2700 - x_600) / 2.1) * (v_oc - 2.7)) + x_2700;
-    // Eq 17, Eq 20, Eq 23
-    let x2 = (((x_14300 - x_2700) / 11.6) * (v_oc - 14.3)) + x_14300;
-    // Eq 18, Eq 21, Eq 24
-    let x3 = ((x1 * (2.7 - v_oc)) / 2.1) + ((x2 * (v_oc - 0.6)) / 2.1);
-
-    if 0.600 < v_oc && v_oc <= 2.7 {
-        x3
-    } else if v_oc > 2.7 {
-        x2
-    } else {
-        unreachable!()
-    }
-}
-
-pub fn interpolate_c(
-    c: &Cubicle,
-    x_600: ElectricCurrent,
-    x_2700: ElectricCurrent,
-    x_14300: ElectricCurrent,
-) -> ElectricCurrent {
-    let v_oc = c.v_oc.get::<kilovolt>();
-
-    // Eq 16, Eq 19, Eq 22
-    let x1 = (((x_2700 - x_600) / 2.1) * (v_oc - 2.7)) + x_2700;
-    // Eq 17, Eq 20, Eq 23
-    let x2 = (((x_14300 - x_2700) / 11.6) * (v_oc - 14.3)) + x_14300;
-    // Eq 18, Eq 21, Eq 24
-    let x3 = ((x1 * (2.7 - v_oc)) / 2.1) + ((x2 * (v_oc - 0.6)) / 2.1);
-
-    if 0.600 < v_oc && v_oc <= 2.7 {
-        x3
-    } else if v_oc > 2.7 {
-        x2
-    } else {
-        unreachable!()
-    }
-}
-
-// pub fn interpolate<K: Sub<Output = f64> + Copy>(c: &Cubicle, x_600: K, x_2700: K, x_14300: K) -> K {
-//     let v_oc = c.v_oc.get::<kilovolt>();
-//
-//     // Eq 16, Eq 19, Eq 22
-//     let x1 = (((x_2700 - x_600) / 2.1) * (v_oc - 2.7)) + x_2700;
-//     // Eq 17, Eq 20, Eq 23
-//     let x2 = (((x_14300 - x_2700) / 11.6) * (v_oc - 14.3)) + x_14300;
-//     // Eq 18, Eq 21, Eq 24
-//     let x3 = ((x1 * (2.7 - v_oc)) / 2.1) + ((x2 * (v_oc - 0.6)) / 2.1);
-//
-//     if 0.600 < v_oc && v_oc <= 2.7 {
-//         x3
-//     } else if v_oc > 2.7 {
-//         x2
-//     } else {
-//         unreachable!()
-//     }
-// }
+pub(crate) use interpolate;
 
 // Equation 25
 pub fn i_arc_final_lv(

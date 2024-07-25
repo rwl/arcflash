@@ -15,7 +15,7 @@ pub enum EnclosureType {
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 pub enum NominalVoltage {
-    V0_6,
-    V2_7,
-    V14_3,
+    V600,
+    V2700,
+    V14300,
 }

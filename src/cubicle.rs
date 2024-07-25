@@ -27,8 +27,14 @@ pub struct Cubicle {
     pub enclosure_type: EnclosureType,
     pub var_cf: f64,
     pub cf: f64,
-    debug: Option<(Length, Length, f64)>,
+    pub(crate) debug: Option<EnclosureDebug>,
     pub hv: bool,
+}
+
+pub(crate) struct EnclosureDebug {
+    pub(crate) height: Length,
+    pub(crate) width: Length,
+    pub(crate) ees: f64,
 }
 
 impl Cubicle {
@@ -174,7 +180,7 @@ impl Cubicle {
         h: Length,
         w: Length,
         enclosure_type: EnclosureType,
-    ) -> (f64, Option<(Length, Length, f64)>) {
+    ) -> (f64, Option<EnclosureDebug>) {
         if ec == ElectrodeConfiguration::HOA || ec == ElectrodeConfiguration::VOA {
             // Open air configurations HOA / VOA do not require a box size correction factor.
             return (1.0, None);
@@ -213,11 +219,11 @@ impl Cubicle {
                 EnclosureType::Typical => Length::new::<inch>(20.0),
                 EnclosureType::Shallow => Length::new::<inch>(MM_TO_IN * w.get::<mm>()),
             }
-        } else if w < Length::new::<mm>(508.0) && w <= Length::new::<mm>(660.4) {
+        } else if w > Length::new::<mm>(508.0) && w <= Length::new::<mm>(660.4) {
             Length::new::<inch>(MM_TO_IN * w.get::<mm>())
-        } else if w < Length::new::<mm>(660.4) && w <= Length::new::<mm>(1244.6) {
+        } else if w > Length::new::<mm>(660.4) && w <= Length::new::<mm>(1244.6) {
             eq_11_12(w)
-        } else if Length::new::<mm>(1244.6) < w {
+        } else if w > Length::new::<mm>(1244.6) {
             eq_11_12(Length::new::<mm>(1244.6))
         } else {
             unreachable!()
@@ -238,7 +244,7 @@ impl Cubicle {
                     unreachable!()
                 }
             }
-        } else if Length::new::<mm>(1244.6) < h {
+        } else if h > Length::new::<mm>(1244.6) {
             match ec {
                 ElectrodeConfiguration::VCB => Length::new::<inch>(49.0),
                 ElectrodeConfiguration::VCBB | ElectrodeConfiguration::HCB => {
@@ -277,7 +283,7 @@ impl Cubicle {
             EnclosureType::Shallow => 1.0 / x1,
         };
 
-        (cf, Some((height, width, ees)))
+        (cf, Some(EnclosureDebug { height, width, ees }))
     }
 }
 
@@ -311,7 +317,7 @@ Box dimensions:
             self.dim.depth.into_format_args(mm, Abbreviation),
         )?;
 
-        if let Some(debug) = self.debug {
+        if let Some(debug) = &self.debug {
             write!(
                 f,
                 "
@@ -323,9 +329,9 @@ Enclosure correction factor
     EES             = {} in
     CF              = {}",
                 self.enclosure_type,
-                debug.0.into_format_args(mm, Abbreviation),
-                debug.1.into_format_args(mm, Abbreviation),
-                debug.2,
+                debug.height.into_format_args(mm, Abbreviation),
+                debug.width.into_format_args(mm, Abbreviation),
+                debug.ees,
                 self.cf
             )?;
         }

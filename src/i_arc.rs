@@ -7,14 +7,33 @@ use uom::si::f64::{ElectricCurrent, ElectricPotential};
 
 use crate::common::NominalVoltage;
 use crate::cubicle::Cubicle;
-use crate::equations::{i_arc_final_lv, i_arc_intermediate, i_arc_min, interpolate_c};
+use crate::equations::{i_arc_final_lv, i_arc_intermediate, i_arc_min, interpolate};
 
+#[derive(Clone)]
 pub enum IArc {
     HighVoltage(IArcHV),
     LowVoltage(IArcLV),
 }
 
 impl IArc {
+    pub fn hv(&self) -> &IArcHV {
+        match self {
+            IArc::HighVoltage(i_arc_hv) => i_arc_hv,
+            IArc::LowVoltage(_) => {
+                panic!("called `IArc::hv()` on a `LowVoltage` value")
+            }
+        }
+    }
+
+    pub fn lv(&self) -> &IArcLV {
+        match self {
+            IArc::LowVoltage(i_arc_lv) => i_arc_lv,
+            IArc::HighVoltage(_) => {
+                panic!("called `IArc::lv()` on a `HighVoltage` value")
+            }
+        }
+    }
+
     pub fn i_bf(&self) -> ElectricCurrent {
         match self {
             IArc::HighVoltage(i_arc) => i_arc.i_bf,
@@ -44,6 +63,7 @@ impl IArc {
     }
 }
 
+#[derive(Clone)]
 pub struct IArcHV {
     pub i_bf: ElectricCurrent,
     pub reduced: bool,
@@ -53,6 +73,7 @@ pub struct IArcHV {
     pub i_arc: ElectricCurrent,
 }
 
+#[derive(Clone)]
 pub struct IArcLV {
     pub i_bf: ElectricCurrent,
     pub reduced: bool,
@@ -87,9 +108,9 @@ pub fn i_arc(c: &Cubicle, i_bf: ElectricCurrent, reduced: bool) -> Result<IArc> 
     }
 
     if c.hv {
-        let i_arc_600_full = i_arc_intermediate(&c, NominalVoltage::V0_6, i_bf);
-        let i_arc_2700_full = i_arc_intermediate(&c, NominalVoltage::V2_7, i_bf);
-        let i_arc_14300_full = i_arc_intermediate(&c, NominalVoltage::V14_3, i_bf);
+        let i_arc_600_full = i_arc_intermediate(&c, NominalVoltage::V600, i_bf);
+        let i_arc_2700_full = i_arc_intermediate(&c, NominalVoltage::V2700, i_bf);
+        let i_arc_14300_full = i_arc_intermediate(&c, NominalVoltage::V14300, i_bf);
         if !reduced {
             let i_arc_600 = i_arc_600_full;
             let i_arc_2700 = i_arc_2700_full;
@@ -101,7 +122,7 @@ pub fn i_arc(c: &Cubicle, i_bf: ElectricCurrent, reduced: bool) -> Result<IArc> 
                 i_arc_14300,
                 i_arc_2700,
                 i_arc_600,
-                i_arc: interpolate_c(&c, i_arc_600, i_arc_2700, i_arc_14300),
+                i_arc: interpolate!(&c, i_arc_600, i_arc_2700, i_arc_14300),
             }))
         } else {
             let i_arc_600 = i_arc_min(&c, i_arc_600_full);
@@ -114,11 +135,11 @@ pub fn i_arc(c: &Cubicle, i_bf: ElectricCurrent, reduced: bool) -> Result<IArc> 
                 i_arc_14300,
                 i_arc_2700,
                 i_arc_600,
-                i_arc: interpolate_c(&c, i_arc_600, i_arc_2700, i_arc_14300),
+                i_arc: interpolate!(&c, i_arc_600, i_arc_2700, i_arc_14300),
             }))
         }
     } else {
-        let i_arc_600 = i_arc_intermediate(&c, NominalVoltage::V0_6, i_bf);
+        let i_arc_600 = i_arc_intermediate(&c, NominalVoltage::V600, i_bf);
         let i_arc_full = i_arc_final_lv(&c, i_arc_600, i_bf);
 
         let i_arc = if !reduced {
