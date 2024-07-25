@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Arc flash calculations according to IEEE 1584"
 license = "MIT"
+repository = "github.com/rwl/arcflash"
 
 [dependencies]
 lazy_static = "1.4"
