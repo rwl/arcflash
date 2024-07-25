@@ -74,6 +74,7 @@ pub struct EAfbLV {
     pub e: RadiantExposure,
 }
 
+/// Calculate the incident energy and Arc Flash Boundary (AFB).
 pub fn e_afb(c: &Cubicle, i_arc: IArc, t_arc: Time) -> EAfb {
     // if c.hv {
     match i_arc {

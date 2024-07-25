@@ -1,3 +1,5 @@
+//! AC arc flash calculations according to IEEE 1584 (for 3-phase AC systems, 208 V - 15,000 V).
+
 mod common;
 mod cubicle;
 mod e_afb;

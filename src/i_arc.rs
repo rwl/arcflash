@@ -81,6 +81,8 @@ pub struct IArcLV {
     pub i_arc: ElectricCurrent,
 }
 
+/// Calculate the arcing current.
+///
 /// If `reduced` is true `I_arc_min` is used, e.g. that the arcing current variation factor `var_cf` is used.
 /// Otherwise, the full value of `I_arc` is used.
 ///
