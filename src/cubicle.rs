@@ -219,14 +219,12 @@ impl Cubicle {
                 EnclosureType::Typical => Length::new::<inch>(20.0),
                 EnclosureType::Shallow => Length::new::<inch>(MM_TO_IN * w.get::<mm>()),
             }
-        } else if w > Length::new::<mm>(508.0) && w <= Length::new::<mm>(660.4) {
+        } else if w <= Length::new::<mm>(660.4) {
             Length::new::<inch>(MM_TO_IN * w.get::<mm>())
-        } else if w > Length::new::<mm>(660.4) && w <= Length::new::<mm>(1244.6) {
+        } else if w <= Length::new::<mm>(1244.6) {
             eq_11_12(w)
-        } else if w > Length::new::<mm>(1244.6) {
-            eq_11_12(Length::new::<mm>(1244.6))
         } else {
-            unreachable!()
+            eq_11_12(Length::new::<mm>(1244.6))
         };
 
         let height = if h < Length::new::<mm>(508.0) {
@@ -234,9 +232,9 @@ impl Cubicle {
                 EnclosureType::Typical => Length::new::<inch>(20.0),
                 EnclosureType::Shallow => Length::new::<inch>(MM_TO_IN * h.get::<mm>()),
             }
-        } else if h > Length::new::<mm>(508.0) && h <= Length::new::<mm>(660.4) {
+        } else if h <= Length::new::<mm>(660.4) {
             Length::new::<inch>(MM_TO_IN * h.get::<mm>())
-        } else if h > Length::new::<mm>(660.4) && h <= Length::new::<mm>(1244.6) {
+        } else if h <= Length::new::<mm>(1244.6) {
             match ec {
                 ElectrodeConfiguration::VCB => Length::new::<inch>(MM_TO_IN * h.get::<mm>()),
                 ElectrodeConfiguration::VCBB | ElectrodeConfiguration::HCB => eq_11_12(h),
@@ -244,7 +242,7 @@ impl Cubicle {
                     unreachable!()
                 }
             }
-        } else if h > Length::new::<mm>(1244.6) {
+        } else {
             match ec {
                 ElectrodeConfiguration::VCB => Length::new::<inch>(49.0),
                 ElectrodeConfiguration::VCBB | ElectrodeConfiguration::HCB => {
@@ -254,8 +252,6 @@ impl Cubicle {
                     unreachable!()
                 }
             }
-        } else {
-            unreachable!()
         };
 
         // Equation 13
