@@ -1,6 +1,6 @@
 [package]
 name = "arcflash"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Arc flash calculations according to IEEE 1584"
 license = "MIT"
